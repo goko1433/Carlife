@@ -1,0 +1,1017 @@
+--- START OF FILE kod.txt ---
+
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>CarLife Ultimate</title>
+    
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    
+    <!-- Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+
+    <style>
+        :root {
+            /* THEME VARIABLES */
+            --bg-body: #050505;
+            --bg-card: #121212;
+            --bg-nav: rgba(15, 15, 15, 0.95);
+            --text-main: #ffffff;
+            --text-sub: #888888;
+            
+            /* COLORS */
+            --carlife-brand: #007AFF; /* Corporate Blue */
+            --siri-grad: linear-gradient(90deg, #30cfd0 0%, #c471ed 50%, #f64f59 100%);
+            
+            /* DYNAMIC ENERGY COLOR (Default: Neon Green) */
+            --energy-color: #30d158;
+            
+            --radius: 26px;
+            --nav-height: 80px;
+            --font-main: 'Outfit', sans-serif;
+            --font-size-base: 15px;
+        }
+
+        /* THEMES */
+        [data-theme="midnight"] { --bg-body: #020617; --bg-card: #0f172a; }
+        [data-theme="oled"] { --bg-body: #000; --bg-card: #000; border: 1px solid #333; }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            font-family: var(--font-main);
+            font-size: var(--font-size-base);
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            padding-bottom: 120px; 
+            padding-top: env(safe-area-inset-top);
+            overflow-x: hidden;
+            transition: font-size 0.2s, background 0.3s;
+        }
+
+        /* --- ANIMATIONS --- */
+        @keyframes flowSmooth { 0% { stroke-dashoffset: 40; } 100% { stroke-dashoffset: 0; } }
+        @keyframes pistonMove { 
+            0% { transform: translateX(0); } 
+            50% { transform: translateX(6px); } 
+            100% { transform: translateX(0); } 
+        }
+        @keyframes wheelSpin { 0% { stroke-dashoffset: 50; } 100% { stroke-dashoffset: 0; } }
+        @keyframes shine { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+        @keyframes pulseGlow { 0% { box-shadow: 0 0 10px var(--glow-color); } 50% { box-shadow: 0 0 25px var(--glow-color); } 100% { box-shadow: 0 0 10px var(--glow-color); } }
+        @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-5px); } 100% { transform: translateY(0px); } }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideDownToast { from { transform: translate(-50%, -100%); opacity: 0; } to { transform: translate(-50%, 20px); opacity: 1; } }
+        
+        /* NEW CONTINUOUS SPIN FOR TIRES */
+        @keyframes spin { 
+            from { transform: rotate(0deg); } 
+            to { transform: rotate(360deg); } 
+        }
+
+        /* --- UTILS --- */
+        .hidden { display: none !important; }
+        .btn {
+            width: 100%; padding: 16px; border: none; border-radius: 20px;
+            font-weight: 700; font-size: 1em; cursor: pointer; color: white;
+            background: var(--siri-grad); background-size: 200% 200%;
+            animation: shine 4s ease infinite;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.4);
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+            transition: transform 0.1s;
+        }
+        .btn:active { transform: scale(0.96); }
+        
+        .card {
+            background: var(--bg-card); padding: 24px; border-radius: var(--radius);
+            margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.06);
+            position: relative; overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+        
+        /* ACTION CARDS */
+        .action-card {
+            background: rgba(255,255,255,0.03);
+            border-radius: var(--radius); padding: 25px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            border: 1px solid rgba(255,255,255,0.1); cursor: pointer;
+            transition: transform 0.2s; animation: float 6s ease-in-out infinite;
+        }
+        .action-card:active { transform: scale(0.95); }
+        .action-card.fuel { --glow-color: rgba(48,207,208,0.4); animation: pulseGlow 3s infinite alternate, float 6s ease-in-out infinite; border-bottom: 2px solid #30cfd0; }
+        .action-card.maint { --glow-color: rgba(246,79,89,0.4); animation: pulseGlow 3s infinite alternate-reverse, float 7s ease-in-out infinite; border-bottom: 2px solid #f64f59; }
+
+        .input-group {
+            background: rgba(255,255,255,0.05); padding: 14px 16px; border-radius: 16px; margin-bottom: 12px;
+            border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; gap: 12px;
+        }
+        .input-box { background: transparent; border: none; color: white; width: 100%; font-size: 1em; font-family: var(--font-main); outline: none; }
+        .label { font-size: 0.8em; color: var(--text-sub); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; display: block; font-weight: 600; }
+
+        /* --- LIVING TEXT --- */
+        .living-text {
+            background: var(--siri-grad); background-size: 200% auto;
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            animation: shine 3s linear infinite;
+        }
+
+        /* --- HEADER --- */
+        .top-ticker {
+            position: fixed; top: 0; left: 0; right: 0; height: 50px;
+            background: rgba(0,0,0,0.6); backdrop-filter: blur(15px);
+            border-bottom: 1px solid rgba(255,255,255,0.05); z-index: 2000;
+            display: flex; align-items: center; justify-content: flex-end; padding-right: 20px;
+        }
+        .usd-pill {
+            display: flex; align-items: center; background: rgba(255,255,255,0.08);
+            padding: 6px 14px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1);
+        }
+        .live-dot {
+            width: 6px; height: 6px; background: var(--energy-color); border-radius: 50%;
+            margin-left: 8px; box-shadow: 0 0 10px var(--energy-color);
+            animation: pulseGlow 1s infinite alternate;
+        }
+
+        header { margin-top: 60px; padding: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .logo-container { display: flex; flex-direction: column; }
+        .logo-svg { height: 32px; fill: white; filter: drop-shadow(0 0 5px rgba(255,255,255,0.5)); }
+
+        /* --- CHASSIS VISUAL (3D DETAILED) --- */
+        .chassis-container {
+            position: relative; height: 260px; margin: 10px 0 30px 0;
+            background: radial-gradient(circle at center, rgba(30,30,40,0.5) 0%, transparent 70%);
+            display: flex; justify-content: center; align-items: center;
+        }
+        .blueprint-svg { width: 100%; height: 100%; max-width: 400px; filter: drop-shadow(0 20px 30px rgba(0,0,0,0.6)); transition: all 0.3s; }
+
+        /* Chassis Gradients & Strokes */
+        .bp-frame { fill: url(#gradMetal); stroke: #111; stroke-width: 1; }
+        .bp-suspension { fill: none; stroke: #444; stroke-width: 3; stroke-linecap: round; }
+        .bp-wheel { fill: #111; stroke: #222; stroke-width: 0; rx: 5; }
+        
+        /* Neon Borders for Wheels/Battery */
+        .neon-border {
+            fill: none; stroke: var(--energy-color); stroke-width: 2;
+            stroke-dasharray: 12 6; animation: wheelSpin 1.5s linear infinite;
+            opacity: 0.8; filter: drop-shadow(0 0 4px var(--energy-color));
+        }
+
+        /* 3D Piston Animation */
+        .piston-chamber { fill: #222; stroke: #444; stroke-width: 1; }
+        .piston-head { fill: url(#gradPiston); }
+        /* Staggered Movement */
+        .piston-move-1 { animation: pistonMove 0.4s ease-in-out infinite; }
+        .piston-move-2 { animation: pistonMove 0.4s ease-in-out infinite 0.1s; }
+        .piston-move-3 { animation: pistonMove 0.4s ease-in-out infinite 0.2s; }
+        .piston-move-4 { animation: pistonMove 0.4s ease-in-out infinite 0.3s; }
+
+        /* Energy Pipe */
+        .bp-energy-pipe {
+            fill: none; stroke: var(--energy-color); stroke-width: 3;
+            stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 15 15;
+            animation: flowSmooth 1s linear infinite;
+            filter: drop-shadow(0 0 6px var(--energy-color)); opacity: 0.9;
+        }
+
+        /* --- AI BOX --- */
+        .ai-box {
+            background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 20px; padding: 15px; margin-bottom: 10px;
+            display: flex; gap: 15px; align-items: center; position: relative; overflow: hidden;
+        }
+        .ai-avatar {
+            width: 45px; height: 45px; border-radius: 50%; flex-shrink: 0;
+            background: var(--siri-grad); display: flex; align-items: center; justify-content: center;
+            font-size: 1.2em; color: white; animation: float 4s ease-in-out infinite;
+        }
+        .ai-loading {
+            position: absolute; inset: 0; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
+            animation: shine 1.5s infinite; display: none;
+        }
+
+        /* --- NAV BAR --- */
+        .nav-bar {
+            position: fixed; bottom: 20px; left: 20px; right: 20px;
+            height: var(--nav-height); background: var(--bg-nav);
+            backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 40px; display: flex; justify-content: space-around; align-items: center;
+            z-index: 2500; box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+        }
+        .nav-item { color: #666; font-size: 1.4em; padding: 15px; transition: 0.3s; border-radius: 50%; position: relative; }
+        .nav-item.active { color: white; transform: translateY(-5px); background: rgba(255,255,255,0.1); }
+
+        /* --- TIRES & CALENDAR --- */
+        .chassis-wrapper { position: relative; width: 240px; height: 380px; margin: 20px auto; }
+        .neon-spine {
+            position: absolute; top: 40px; left: 50%; transform: translateX(-50%);
+            width: 100px; height: 300px; border-radius: 30px;
+            border: 2px solid #222; background: #080808; z-index: 1;
+        }
+        .tire-unit { position: absolute; width: 70px; height: 90px; z-index: 5; display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: 0.2s; }
+        .tire-unit:active { transform: scale(0.9); }
+        .t-fl { top: 0; left: -15px; } .t-fr { top: 0; right: -15px; }
+        .t-rl { bottom: 0; left: -15px; } .t-rr { bottom: 0; right: -15px; }
+        
+        /* Updated Spinner Animation */
+        .spinner-svg { width: 70px; height: 70px; animation: spin 4s linear infinite; /* Continuously spins now */ }
+        .gradient-stroke { fill: none; stroke: url(#gradSiri); stroke-width: 5; stroke-linecap: round; stroke-dasharray: 100 100; }
+
+        .cal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 16px; }
+        .cal-nav-btn { background: none; border: none; color: white; font-size: 1.2em; padding: 5px 15px; cursor: pointer; }
+        .mini-cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+        .cal-day-header { text-align: center; font-size: 0.7em; color: #666; padding-bottom: 5px; }
+        .cal-day {
+            aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            font-size: 0.9em; color: #555; border-radius: 12px; position: relative; transition: 0.2s; background: rgba(255,255,255,0.02);
+        }
+        .cal-day.active-day { background: rgba(255,255,255,0.15); color: white; font-weight: 700; cursor: pointer; border: 1px solid rgba(255,255,255,0.2); }
+        .cal-dot { width: 5px; height: 5px; background: var(--energy-color); border-radius: 50%; position: absolute; bottom: 6px; box-shadow: 0 0 5px var(--energy-color); }
+
+        /* --- TOAST --- */
+        #toast-container { position: fixed; top: 0; left: 50%; transform: translateX(-50%); z-index: 6000; }
+        .toast {
+            background: rgba(20,20,20,0.95); border: 1px solid rgba(255,255,255,0.2);
+            color: white; padding: 15px 25px; border-radius: 30px; margin-top: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5); display: flex; align-items: center; gap: 10px;
+            animation: slideDownToast 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        .star-rating { display: flex; gap: 10px; justify-content: center; margin: 10px 0; }
+        .star-rating i { font-size: 1.5em; color: #333; cursor: pointer; transition: 0.2s; }
+        .star-rating i.selected { color: #F0B90B; transform: scale(1.1); }
+
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 4000;
+            padding: 20px; display: flex; flex-direction: column; justify-content: center;
+        }
+        
+        section { animation: slideIn 0.5s cubic-bezier(0.16, 1, 0.3, 1); }
+        svg { overflow: visible; }
+
+        /* --- NEW FEATURES CSS & MOBILE FIXES --- */
+        
+        /* Default positions */
+        .health-bar-container { 
+            position: absolute; right: 20px; top: 50%; transform: translateY(-50%); 
+            height: 160px; width: 12px; background: rgba(255,255,255,0.1); 
+            border-radius: 10px; overflow: hidden; border: 1px solid rgba(255,255,255,0.2); 
+            transition: all 0.3s;
+        }
+        .health-fill { width: 100%; bottom: 0; position: absolute; background: var(--energy-color); transition: height 0.5s, background 0.5s; box-shadow: 0 0 15px var(--energy-color); }
+        .health-label { position:absolute; right: 40px; top: 50%; transform:translateY(-50%); text-align:right; transition: all 0.3s; }
+
+        .fuel-tank-container { 
+            position: absolute; left: 20px; top: 50%; transform: translateY(-50%); 
+            width: 40px; text-align: center; transition: all 0.3s; 
+        }
+        .fuel-icon { font-size: 24px; color: #30cfd0; margin-bottom: 5px; filter: drop-shadow(0 0 5px #30cfd0); }
+        .fuel-bar { height: 120px; width: 10px; background: rgba(255,255,255,0.1); margin: 0 auto; border-radius: 10px; position: relative; overflow: hidden; border: 1px solid rgba(255,255,255,0.2); }
+        .fuel-level { width: 100%; bottom: 0; position: absolute; background: #30cfd0; box-shadow: 0 0 10px #30cfd0; transition: height 0.5s; }
+        
+        @keyframes strokeFlow { 0% { stroke-dashoffset: 200; } 100% { stroke-dashoffset: 0; } }
+        .gradient-stroke { animation: strokeFlow 3s linear infinite; stroke-dasharray: 200 200; }
+        @keyframes breathing { 0% { opacity: 0.8; } 50% { opacity: 1; box-shadow: 0 0 15px #30cfd0; } 100% { opacity: 0.8; } }
+        .fuel-level { animation: breathing 3s ease-in-out infinite; }
+
+        /* --- MOBILE RESPONSIVE FIX --- */
+        @media (max-width: 480px) {
+            .blueprint-svg {
+                max-width: 65%; /* Shrink chassis to make room */
+            }
+            .fuel-tank-container {
+                left: 5px; /* Push to very edge */
+                transform: translateY(-50%) scale(0.9);
+            }
+            .health-bar-container {
+                right: 5px; /* Push to very edge */
+                height: 140px;
+            }
+            .health-label {
+                right: 22px; /* Move label closer to bar */
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- GLOBAL SVG DEFS -->
+    <svg width="0" height="0" style="position:absolute;">
+        <defs>
+            <linearGradient id="gradSiri" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:#30cfd0" />
+                <stop offset="50%" style="stop-color:#c471ed" />
+                <stop offset="100%" style="stop-color:#f64f59" />
+            </linearGradient>
+            <!-- 3D Metal Gradient for Chassis -->
+            <linearGradient id="gradMetal" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" style="stop-color:#555" />
+                <stop offset="50%" style="stop-color:#222" />
+                <stop offset="100%" style="stop-color:#444" />
+            </linearGradient>
+             <!-- Piston Gradient -->
+             <linearGradient id="gradPiston" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" style="stop-color:#888" />
+                <stop offset="100%" style="stop-color:#ccc" />
+            </linearGradient>
+        </defs>
+    </svg>
+
+    <!-- TOAST CONTAINER -->
+    <div id="toast-container"></div>
+
+    <!-- HEADER -->
+    <div class="top-ticker">
+        <div class="usd-pill">
+            <i class="fas fa-dollar-sign" style="margin-right:4px; color:#F0B90B; font-size:0.9em;"></i>
+            <span id="usdt-price" style="font-size:0.85em; font-weight:700; color:white;">...</span>
+            <div class="live-dot"></div>
+        </div>
+        <!-- NEW BTC TICKER -->
+        <div class="usd-pill" id="btc-pill" style="margin-left:10px; border-color: #F7931A; background: rgba(247, 147, 26, 0.1);">
+            <i class="fab fa-bitcoin" style="margin-right:4px; color:#F7931A; font-size:0.9em;"></i>
+            <span id="btc-price" style="font-size:0.85em; font-weight:700; color:white;">...</span>
+            <div class="live-dot" style="background: #F7931A; box-shadow: 0 0 10px #F7931A;"></div>
+        </div>
+    </div>
+
+    <!-- WELCOME / INSTALL SCREEN -->
+    <div id="welcome-overlay" class="hidden" style="position:fixed; inset:0; background:#000; z-index:5000; padding:30px; display:flex; flex-direction:column; overflow-y:auto;">
+        <div style="text-align:center; margin-bottom:20px; margin-top:20px;">
+            <svg class="logo-svg" viewBox="0 0 200 40" style="height:50px;">
+                <path d="M20,20 Q10,20 10,30 L10,35 L40,35 L40,30 Q40,20 30,20 Z" fill="#007AFF"/>
+                <circle cx="15" cy="35" r="5" fill="#fff"/>
+                <circle cx="35" cy="35" r="5" fill="#fff"/>
+                <text x="55" y="32" font-family="'Outfit', sans-serif" font-weight="800" font-size="28" fill="white">CarLife</text>
+            </svg>
+            <p style="color:#aaa; font-size:0.9em; margin-top:10px;">Profesyonel Araç Asistanı</p>
+        </div>
+
+        <div class="instruction-box" style="background:#111; padding:20px; border-radius:16px; margin-bottom:15px; border:1px solid #333; display:flex; gap:15px;">
+            <i class="fab fa-apple" style="font-size:1.5em; color:white;"></i>
+            <div><strong>iOS Kurulum</strong><br><span style="font-size:0.9em; color:#888;">Safari'de "Paylaş" butonuna basın ve "Ana Ekrana Ekle"yi seçin.</span></div>
+        </div>
+
+        <div class="instruction-box" style="background:#111; padding:20px; border-radius:16px; margin-bottom:15px; border:1px solid #333; display:flex; gap:15px;">
+            <i class="fab fa-android" style="font-size:1.5em; color:white;"></i>
+            <div><strong>Android Kurulum</strong><br><span style="font-size:0.9em; color:#888;">Chrome menüsünü açın ve "Uygulamayı Yükle" veya "Ana Ekrana Ekle"yi seçin.</span></div>
+        </div>
+
+        <div class="instruction-box" style="background:#111; padding:20px; border-radius:16px; margin-bottom:15px; border:1px solid #333; display:flex; gap:15px;">
+            <i class="fas fa-bolt" style="color:var(--energy-color); font-size:1.5em;"></i>
+            <div><strong>Simülasyon</strong><br><span style="font-size:0.9em; color:#888;">Yakıt/Bakım verilerine göre lastik ve bakım ömrü simüle edilir.</span></div>
+        </div>
+
+        <div style="margin-top:auto;">
+            <button class="btn" onclick="app.closeWelcome()">Uygulamayı Başlat</button>
+        </div>
+    </div>
+
+    <!-- SETUP -->
+    <div id="onboarding-setup" class="hidden" style="position:fixed; inset:0; background:#000; z-index:4500; padding:30px; display:flex; flex-direction:column; justify-content:center;">
+        <h2 style="margin-bottom:20px;">Araç Kurulumu</h2>
+        <div class="input-group"><i class="fas fa-car"></i><input type="text" id="ob-name" class="input-box" placeholder="Araç Adı"></div>
+        <div class="input-group"><i class="fas fa-tachometer-alt"></i><input type="number" id="ob-km" class="input-box" placeholder="Mevcut KM"></div>
+        <div class="input-group"><i class="fas fa-wrench"></i><input type="number" id="ob-int" class="input-box" value="10000" placeholder="Bakım Aralığı"></div>
+        <button class="btn" onclick="app.finishSetup()">Kaydet</button>
+    </div>
+
+    <!-- MAIN APP -->
+    <div id="app-container" class="hidden">
+        
+        <header>
+            <div class="logo-container">
+                <!-- Corporate Logo SVG -->
+                <svg class="logo-svg" viewBox="0 0 150 35">
+                    <path d="M15,10 Q5,10 5,20 L5,25 L25,25 L25,20 Q25,10 15,10 Z" fill="#007AFF"/>
+                    <circle cx="10" cy="25" r="4" fill="#fff"/>
+                    <circle cx="20" cy="25" r="4" fill="#fff"/>
+                    <text x="35" y="22" font-family="'Outfit', sans-serif" font-weight="800" font-size="20" fill="white">CarLife</text>
+                </svg>
+                <div style="font-size:0.8em; color:var(--text-sub); margin-left:2px; margin-top:2px;" id="disp-name">ARACIM</div>
+            </div>
+            <div id="maint-badge" style="padding:10px 18px; background:rgba(48,209,88,0.1); border:1px solid rgba(48,209,88,0.3); color:var(--energy-color); border-radius:15px; font-weight:700; font-size:0.9em;">
+                DURUM İYİ
+            </div>
+        </header>
+
+        <!-- VIEW: HOME -->
+        <section id="view-home" style="padding:0 20px;">
+            
+            <div class="ai-box">
+                <div class="ai-loading" id="ai-loading"></div>
+                <div class="ai-avatar"><i class="fas fa-robot"></i></div>
+                <div>
+                    <div style="font-size:0.8em; color:rgba(48, 207, 208, 0.8); font-weight:700; margin-bottom:5px;">AI ÖNGÖRÜSÜ</div>
+                    <div style="font-size:0.95em; line-height:1.4;" id="ai-msg">Veri analizi bekleniyor...</div>
+                </div>
+            </div>
+
+            <!-- DETAILED 3D CHASSIS VISUAL -->
+            <div class="chassis-container">
+                <!-- NEW FEATURES: SIMULATION GAUGES -->
+                <div class="fuel-tank-container">
+                    <i class="fas fa-gas-pump fuel-icon"></i>
+                    <div class="fuel-bar"><div id="fuel-level-ui" class="fuel-level" style="height: 50%;"></div></div>
+                    <div style="font-size:10px; margin-top:5px; color:#aaa;">YAKIT</div>
+                </div>
+
+                <svg class="blueprint-svg" viewBox="0 0 300 150">
+                    <!-- Ground Reflection -->
+                    <ellipse cx="150" cy="130" rx="130" ry="10" fill="rgba(255,255,255,0.03)" />
+
+                    <!-- REAR AXLE -->
+                    <rect x="30" y="10" width="40" height="25" rx="4" class="bp-wheel" /> <!-- Rear L -->
+                    <rect x="30" y="115" width="40" height="25" rx="4" class="bp-wheel" /> <!-- Rear R -->
+                    
+                    <!-- NEON WHEEL BORDERS (Rear) -->
+                    <rect x="28" y="8" width="44" height="29" rx="5" class="neon-border" />
+                    <rect x="28" y="113" width="44" height="29" rx="5" class="neon-border" />
+
+                    <!-- FRONT AXLE -->
+                    <rect x="230" y="10" width="40" height="25" rx="4" class="bp-wheel" /> <!-- Front L -->
+                    <rect x="230" y="115" width="40" height="25" rx="4" class="bp-wheel" /> <!-- Front R -->
+                    
+                    <!-- NEON WHEEL BORDERS (Front) -->
+                    <rect x="228" y="8" width="44" height="29" rx="5" class="neon-border" />
+                    <rect x="228" y="113" width="44" height="29" rx="5" class="neon-border" />
+
+                    <!-- AXLE SHAFTS -->
+                    <line x1="50" y1="35" x2="50" y2="115" stroke="#222" stroke-width="8" stroke-linecap="round" />
+                    <line x1="250" y1="35" x2="250" y2="115" stroke="#222" stroke-width="8" stroke-linecap="round" />
+                    
+                    <!-- DIFFERENTIAL (Rear) -->
+                    <circle cx="50" cy="75" r="10" fill="#222" stroke="#333" />
+
+                    <!-- MAIN FRAME (3D Look) -->
+                    <!-- Side Rails -->
+                    <path d="M50,50 L240,50 L250,55 L250,95 L240,100 L50,100 Z" fill="none" stroke="#333" stroke-width="6" stroke-linejoin="round" />
+                    <!-- Cross Members -->
+                    <line x1="100" y1="50" x2="100" y2="100" stroke="#333" stroke-width="6" />
+                    <line x1="180" y1="50" x2="180" y2="100" stroke="#333" stroke-width="6" />
+
+                    <!-- SUSPENSION ARMS (Wishbones) -->
+                    <path d="M50,50 L70,75 L50,100" fill="none" stroke="#444" stroke-width="2" />
+                    <path d="M250,50 L230,75 L250,100" fill="none" stroke="#444" stroke-width="2" />
+
+                    <!-- BATTERY PACK -->
+                    <rect x="120" y="58" width="80" height="34" rx="2" fill="#151515" stroke="#444" />
+                    <!-- Battery Neon Border -->
+                    <rect x="118" y="56" width="84" height="38" rx="3" class="neon-border" style="animation-duration: 3s;" />
+                    <text x="160" y="78" fill="#555" font-size="6" text-anchor="middle" font-weight="bold" font-family="sans-serif">BATTERY PACK</text>
+
+                    <!-- ENGINE BLOCK -->
+                    <rect x="210" y="58" width="50" height="34" rx="2" fill="#1a1a1a" stroke="#444" />
+                    
+                    <!-- 3D PISTONS (Moving Back and Forth) -->
+                    <g transform="translate(220, 62)">
+                        <!-- Cylinder 1 -->
+                        <rect x="0" y="0" width="12" height="6" class="piston-chamber" />
+                        <rect x="2" y="1" width="6" height="4" rx="1" class="piston-head piston-move-1" />
+                        
+                        <!-- Cylinder 2 -->
+                        <rect x="0" y="8" width="12" height="6" class="piston-chamber" />
+                        <rect x="2" y="9" width="6" height="4" rx="1" class="piston-head piston-move-2" />
+                        
+                        <!-- Cylinder 3 -->
+                        <rect x="0" y="16" width="12" height="6" class="piston-chamber" />
+                        <rect x="2" y="17" width="6" height="4" rx="1" class="piston-head piston-move-3" />
+                        
+                         <!-- Cylinder 4 -->
+                         <rect x="0" y="24" width="12" height="6" class="piston-chamber" />
+                         <rect x="2" y="25" width="6" height="4" rx="1" class="piston-head piston-move-4" />
+                    </g>
+
+                    <!-- ENERGY CABLE -->
+                    <path d="M120,75 L100,75 L90,65 L70,65 L60,75" fill="none" stroke="#222" stroke-width="4" />
+                    <path d="M200,75 L210,75" fill="none" stroke="#222" stroke-width="4" />
+                    
+                    <!-- Flow -->
+                    <path d="M200,75 L210,75" class="bp-energy-pipe" />
+                    <path d="M120,75 L100,75" class="bp-energy-pipe" />
+
+                </svg>
+
+                <!-- NEW FEATURES: HEALTH BAR -->
+                <div class="health-bar-container">
+                    <div id="health-fill-ui" class="health-fill" style="height: 100%;"></div>
+                </div>
+                <div class="health-label">
+                     <div style="font-size:10px; color:#aaa;">SAĞLIK</div>
+                     <div id="health-text-ui" style="font-weight:bold; font-size:14px;">100%</div>
+                </div>
+            </div>
+
+            <!-- ACTION CARDS -->
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:20px;">
+                <div class="action-card fuel" onclick="app.openModal('fuel')">
+                    <i class="fas fa-gas-pump" style="font-size:2em; color:#30cfd0; margin-bottom:10px; filter:drop-shadow(0 0 5px #30cfd0);"></i>
+                    <div style="font-weight:700; color:white;">Yakıt Ekle</div>
+                    <div style="font-size:0.7em; color:#aaa;">+ Puanlama</div>
+                </div>
+                <div class="action-card maint" onclick="app.openModal('maint')">
+                    <i class="fas fa-tools" style="font-size:2em; color:#f64f59; margin-bottom:10px; filter:drop-shadow(0 0 5px #f64f59);"></i>
+                    <div style="font-weight:700; color:white;">Bakım Ekle</div>
+                    <div style="font-size:0.7em; color:#aaa;">+ Notlar</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h4 style="margin-bottom:10px; color:#aaa;">Son Hareket</h4>
+                <div id="home-last-log" style="font-size:0.9em; color:white;">Henüz işlem yok.</div>
+            </div>
+        </section>
+
+        <!-- VIEW: TIRES -->
+        <section id="view-tires" class="hidden" style="padding:0 20px;">
+            <h2 style="text-align:center; margin-bottom:10px;">Lastik Durumu</h2>
+            <div class="chassis-wrapper">
+                <div class="neon-spine"></div>
+                <div class="tire-unit t-fl" onclick="app.editTire('fl')">
+                    <svg class="spinner-svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" class="gradient-stroke" /></svg>
+                    <div style="position:absolute; top:25px; font-weight:800; font-size:14px;" id="val-fl">100</div><span style="font-size:11px; margin-top:5px; color:#aaa;">ÖN SOL</span>
+                </div>
+                <div class="tire-unit t-fr" onclick="app.editTire('fr')">
+                    <svg class="spinner-svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" class="gradient-stroke" /></svg>
+                    <div style="position:absolute; top:25px; font-weight:800; font-size:14px;" id="val-fr">100</div><span style="font-size:11px; margin-top:5px; color:#aaa;">ÖN SAĞ</span>
+                </div>
+                <div class="tire-unit t-rl" onclick="app.editTire('rl')">
+                    <svg class="spinner-svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" class="gradient-stroke" /></svg>
+                    <div style="position:absolute; top:25px; font-weight:800; font-size:14px;" id="val-rl">100</div><span style="font-size:11px; margin-top:5px; color:#aaa;">ARKA SOL</span>
+                </div>
+                <div class="tire-unit t-rr" onclick="app.editTire('rr')">
+                    <svg class="spinner-svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" class="gradient-stroke" /></svg>
+                    <div style="position:absolute; top:25px; font-weight:800; font-size:14px;" id="val-rr">100</div><span style="font-size:11px; margin-top:5px; color:#aaa;">ARKA SAĞ</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- VIEW: HISTORY -->
+        <section id="view-history" class="hidden" style="padding:0 20px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                <h2>Takvim & Geçmiş</h2>
+                <button onclick="app.pdfExport()" style="background:#222; border:none; color:rgba(48,207,208,0.8); padding:5px 10px; border-radius:8px;">PDF</button>
+            </div>
+            <div id="calendar-container" style="margin-bottom:20px;">
+                <div class="cal-header">
+                    <button class="cal-nav-btn" onclick="app.changeMonth(-1)"><i class="fas fa-chevron-left"></i></button>
+                    <div id="cal-month-year" style="font-weight:700; color:white;">Ocak 2024</div>
+                    <button class="cal-nav-btn" onclick="app.changeMonth(1)"><i class="fas fa-chevron-right"></i></button>
+                </div>
+                <div class="mini-cal-grid" style="margin-bottom:5px;">
+                    <div class="cal-day-header">Pt</div><div class="cal-day-header">Sa</div><div class="cal-day-header">Ça</div>
+                    <div class="cal-day-header">Pe</div><div class="cal-day-header">Cu</div><div class="cal-day-header">Ct</div><div class="cal-day-header">Pz</div>
+                </div>
+                <div id="cal-grid" class="mini-cal-grid"></div>
+            </div>
+            <div class="card" style="padding:10px;">
+                <canvas id="costChart" style="max-height:180px;"></canvas>
+            </div>
+            <div id="usd-summary" style="margin-bottom:15px; font-size:0.9em; color:#aaa; text-align:center; background:#111; padding:15px; border-radius:12px; border:1px solid #222;">
+                <div style="margin-bottom:5px;">Toplam Harcama</div>
+                <span style="color:white; font-size:1.2em;" id="total-tl-disp">0 ₺</span> &nbsp;|&nbsp; 
+                <span style="color:var(--energy-color); font-size:1.2em;" id="total-usd-disp">0 $</span>
+            </div>
+        </section>
+
+        <!-- VIEW: SETTINGS -->
+        <section id="view-settings" class="hidden" style="padding:0 20px;">
+            <h2>Ayarlar</h2>
+            <div class="card" style="margin-top:20px;">
+                <label class="label">ARAÇ İSMİ</label>
+                <div class="input-group"><input type="text" id="set-name" class="input-box" onchange="app.saveSettings()"></div>
+                
+                <label class="label">TEMA</label>
+                <select id="set-theme" class="input-group input-box" style="background:#111;" onchange="app.applyTheme(this.value); app.saveSettings()">
+                    <option value="default">Siri Dark</option><option value="midnight">Midnight</option><option value="oled">OLED</option>
+                </select>
+
+                <label class="label">ENERJİ RENGİ</label>
+                <div style="display:flex; gap:15px; margin-bottom:15px;">
+                    <div style="width:30px; height:30px; background:#30d158; border-radius:50%;" onclick="app.setEnergyColor('#30d158')"></div>
+                    <div style="width:30px; height:30px; background:#0a84ff; border-radius:50%;" onclick="app.setEnergyColor('#0a84ff')"></div>
+                    <div style="width:30px; height:30px; background:#ff453a; border-radius:50%;" onclick="app.setEnergyColor('#ff453a')"></div>
+                    <div style="width:30px; height:30px; background:#ffd60a; border-radius:50%;" onclick="app.setEnergyColor('#ffd60a')"></div>
+                </div>
+                
+                <label class="label">YAZI BOYUTU</label>
+                <input type="range" min="13" max="18" value="15" style="width:100%; margin:10px 0;" oninput="app.setFontSize(this.value)">
+            </div>
+            
+            <!-- NEW FEATURES: DATA EXPORT/IMPORT -->
+            <div class="card">
+                <h4 style="color:#aaa; margin-bottom:10px;">Veri Yönetimi</h4>
+                <button class="btn" style="background:#333; margin-bottom:10px;" onclick="app.exportData()">Verileri Dışa Aktar (JSON)</button>
+                <button class="btn" style="background:#333;" onclick="document.getElementById('import-file').click()">Verileri İçeri Aktar</button>
+                <input type="file" id="import-file" class="hidden" onchange="app.importData(this)">
+            </div>
+
+            <div class="card">
+                <button class="btn" onclick="app.hardReset()" style="background:rgba(255,59,48,0.2); border:1px solid rgba(255,0,0,0.2); color:#ff3b30;">Sıfırla</button>
+            </div>
+        </section>
+    </div>
+
+    <!-- NAVIGATION -->
+    <nav class="nav-bar hidden" id="main-nav">
+        <div class="nav-item active" onclick="app.navTo('view-home', this)"><i class="fas fa-home"></i></div>
+        <div class="nav-item" onclick="app.navTo('view-tires', this)"><i class="fas fa-bullseye"></i></div>
+        <div class="nav-item" onclick="app.navTo('view-history', this)"><i class="fas fa-calendar-alt"></i></div>
+        <div class="nav-item" onclick="app.navTo('view-settings', this)"><i class="fas fa-sliders-h"></i></div>
+    </nav>
+
+    <!-- MODALS -->
+    <div id="modal-container" class="modal-overlay hidden">
+        
+        <div id="form-fuel" class="card hidden" style="border:1px solid #30cfd0;">
+            <h3 style="margin-bottom:15px; color:#30cfd0;">⛽ Yakıt Kaydı</h3>
+            <div class="input-group"><input type="date" id="f-date" class="input-box"></div>
+            <div class="input-group"><input type="text" id="f-station" class="input-box" placeholder="İstasyon"></div>
+            <div class="star-rating" id="f-stars">
+                <i class="fas fa-star" onclick="app.setRating(1)"></i><i class="fas fa-star" onclick="app.setRating(2)"></i>
+                <i class="fas fa-star" onclick="app.setRating(3)"></i><i class="fas fa-star" onclick="app.setRating(4)"></i>
+                <i class="fas fa-star" onclick="app.setRating(5)"></i>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                <div class="input-group"><input type="number" id="f-cost" class="input-box" placeholder="TL"></div>
+                <div class="input-group"><input type="number" id="f-lit" class="input-box" placeholder="Litre"></div>
+            </div>
+            <div class="input-group"><input type="number" id="f-km" class="input-box" placeholder="Yeni KM"></div>
+            <button class="btn" onclick="app.saveFuel()">Kaydet</button>
+            <div style="text-align:center; margin-top:10px; color:#666;" onclick="app.closeModal()">İptal</div>
+        </div>
+
+        <div id="form-maint" class="card hidden" style="border:1px solid #f64f59;">
+            <h3 style="margin-bottom:15px; color:#f64f59;">🔧 Bakım Kaydı</h3>
+            <div class="input-group"><input type="date" id="m-date" class="input-box"></div>
+            <div class="input-group"><select id="m-type" class="input-box" style="background:transparent;"><option>Periyodik</option><option>Fren</option><option>Lastik</option><option>Arıza</option></select></div>
+            <div class="input-group"><input type="number" id="m-km" class="input-box" placeholder="KM"></div>
+            <div class="input-group"><input type="number" id="m-cost" class="input-box" placeholder="Tutar"></div>
+            <div class="input-group"><input type="text" id="m-note" class="input-box" placeholder="Not"></div>
+            <button class="btn" style="background:#f64f59;" onclick="app.saveMaint()">Kaydet</button>
+            <div style="text-align:center; margin-top:10px; color:#666;" onclick="app.closeModal()">İptal</div>
+        </div>
+
+        <div id="form-tire" class="card hidden" style="text-align:center;">
+            <h3>Lastik Düzenle</h3>
+            <h1 id="disp-tire-val" class="living-text" style="font-size:3em; margin:10px 0;">100%</h1>
+            <input type="range" id="t-slider" min="0" max="100" style="width:100%; margin-bottom:20px;" oninput="document.getElementById('disp-tire-val').innerText=this.value+'%'">
+            <button class="btn" onclick="app.updateTire()">Güncelle</button><br>
+            <button class="btn" style="background:#222;" onclick="app.renewTire()">Yenile</button>
+            <div style="margin-top:15px; color:#888;" onclick="app.closeModal()">Kapat</div>
+        </div>
+
+        <div id="modal-day-detail" class="card hidden" style="max-height:80vh;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                <h3 id="day-detail-title">Detay</h3>
+                <div onclick="app.closeModal()" style="padding:5px 12px; background:#222; border-radius:10px;">✕</div>
+            </div>
+            <div id="day-detail-content"></div>
+        </div>
+
+    </div>
+
+    <script>
+        const app = {
+            data: {
+                car: null,
+                logs: [],
+                tires: { fl: 100, fr: 100, rl: 100, rr: 100 },
+                settings: { theme: 'default', size: 15, energyColor: '#30d158' }
+            },
+            currentUsdRate: 34.80,
+            currentBtcRate: 0,
+            currentRating: 0,
+            editingKey: null,
+            chartInst: null,
+            calMonth: new Date().getMonth(),
+            calYear: new Date().getFullYear(),
+            tickerInterval: null,
+
+            init: function() {
+                const stored = localStorage.getItem('carlife_v13');
+                if(stored) this.data = JSON.parse(stored);
+                
+                // Ensure Settings
+                if(!this.data.settings) this.data.settings = { theme: 'default', size: 15, energyColor: '#30d158' };
+                this.applyTheme(this.data.settings.theme);
+                this.setFontSize(this.data.settings.size);
+                this.setEnergyColor(this.data.settings.energyColor, false);
+                document.getElementById('set-theme').value = this.data.settings.theme;
+
+                if(!this.data.car) document.getElementById('welcome-overlay').classList.remove('hidden');
+                else this.showApp();
+                this.fetchTicker();
+                this.startTickers(); // Start live interval
+            },
+
+            closeWelcome: function() {
+                document.getElementById('welcome-overlay').classList.add('hidden');
+                if(!this.data.car) document.getElementById('onboarding-setup').classList.remove('hidden');
+                else this.showApp();
+            },
+
+            finishSetup: function() {
+                const name = document.getElementById('ob-name').value;
+                const km = parseInt(document.getElementById('ob-km').value);
+                const interval = parseInt(document.getElementById('ob-int').value);
+                if(!name || !km) return alert("Eksik bilgi!");
+                this.data.car = { name, km, startKm: km, interval, lastMaint: km };
+                this.save();
+                document.getElementById('onboarding-setup').classList.add('hidden');
+                this.showApp();
+            },
+
+            showApp: function() {
+                document.getElementById('app-container').classList.remove('hidden');
+                document.getElementById('main-nav').classList.remove('hidden');
+                this.updateUI();
+                this.runAI();
+            },
+
+            fetchTicker: async function() {
+                try {
+                    // USDT
+                    const r = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=USDTTRY');
+                    const d = await r.json();
+                    this.currentUsdRate = parseFloat(d.price);
+                    document.getElementById('usdt-price').innerText = this.currentUsdRate.toFixed(2);
+                    // BTC
+                    const r2 = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT');
+                    const d2 = await r2.json();
+                    this.currentBtcRate = parseFloat(d2.price);
+                    document.getElementById('btc-price').innerText = Math.floor(this.currentBtcRate).toLocaleString();
+                } catch(e) { 
+                    // Fail silent
+                }
+            },
+            
+            startTickers: function() {
+                if(this.tickerInterval) clearInterval(this.tickerInterval);
+                this.tickerInterval = setInterval(() => this.fetchTicker(), 1000);
+            },
+
+            setRating: function(n) {
+                this.currentRating = n;
+                const stars = document.getElementById('f-stars').children;
+                for(let i=0; i<5; i++) {
+                    stars[i].classList.remove('selected');
+                    if(i < n) stars[i].classList.add('selected');
+                }
+            },
+
+            showToast: function(msg) {
+                const c = document.getElementById('toast-container');
+                const t = document.createElement('div');
+                t.className = 'toast';
+                t.innerHTML = `<i class="fas fa-check-circle" style="color:var(--energy-color)"></i> ${msg}`;
+                c.appendChild(t);
+                setTimeout(() => t.remove(), 3000);
+            },
+
+            runAI: function() {
+                const msgEl = document.getElementById('ai-msg');
+                const loader = document.getElementById('ai-loading');
+                loader.style.display = 'block';
+                msgEl.innerText = "Veriler analiz ediliyor...";
+                setTimeout(() => {
+                    loader.style.display = 'none';
+                    const logs = this.data.logs.filter(l => l.type === 'fuel');
+                    if(logs.length < 2) { msgEl.innerText = "Yapay zeka analiz için en az 2 yakıt kaydı bekliyor."; return; }
+                    logs.sort((a,b) => new Date(a.date) - new Date(b.date));
+                    const diffDays = (new Date(logs[logs.length-1].date) - new Date(logs[0].date)) / (1000*3600*24);
+                    const diffKm = logs[logs.length-1].km - logs[0].km;
+                    if(diffDays > 0 && diffKm > 0) {
+                        const avgDaily = (diffKm / diffDays).toFixed(1);
+                        const kmLeft = this.data.car.interval - (this.data.car.km - this.data.car.lastMaint);
+                        let pred = kmLeft > 0 ? `Tahmini Bakım: <strong style="color:rgba(48,207,208,0.8)">${new Date(new Date().setDate(new Date().getDate() + Math.floor(kmLeft/avgDaily))).toLocaleDateString()}</strong>` : `<strong style="color:rgba(246,79,89,0.8)">BAKIM GECİKTİ!</strong>`;
+                        msgEl.innerHTML = `Günde ortalama <strong>${avgDaily} KM</strong> yapıyorsun.<br>${pred}`;
+                    }
+                }, 1500);
+            },
+
+            // --- SIMULATION LOGIC ---
+            calcSim: function() {
+                // 1. Vehicle Health Logic (Avg Tires)
+                const t = this.data.tires;
+                const health = Math.floor((t.fl + t.fr + t.rl + t.rr) / 4);
+                const hFill = document.getElementById('health-fill-ui');
+                const hText = document.getElementById('health-text-ui');
+                if(hFill) hFill.style.height = health + '%';
+                if(hText) hText.innerText = health + '%';
+                if(health < 50) hFill.style.background = '#f64f59';
+                else hFill.style.background = this.data.settings.energyColor;
+
+                // 2. Fuel Tank Logic
+                const fLogs = this.data.logs.filter(l => l.type === 'fuel').sort((a,b) => a.km - b.km);
+                let fuelPct = 50; // default
+                if(fLogs.length > 0) {
+                    const lastLog = fLogs[fLogs.length-1];
+                    // Estimate range based on history or default 600km
+                    let estRange = 600; 
+                    if(fLogs.length > 1) {
+                         // Calculate avg distance between fills
+                         let totalDist = 0;
+                         for(let i=1; i<fLogs.length; i++) totalDist += (fLogs[i].km - fLogs[i-1].km);
+                         estRange = totalDist / (fLogs.length - 1);
+                    }
+                    const drivenSince = this.data.car.km - lastLog.km;
+                    const remaining = Math.max(0, estRange - drivenSince);
+                    fuelPct = Math.min(100, Math.floor((remaining / estRange) * 100));
+                }
+                const fBar = document.getElementById('fuel-level-ui');
+                if(fBar) fBar.style.height = fuelPct + '%';
+                if(fuelPct < 20) fBar.style.background = '#f64f59';
+                else fBar.style.background = '#30cfd0';
+            },
+
+            updateUI: function() {
+                const c = this.data.car;
+                document.getElementById('disp-name').innerText = c.name;
+                // Removed disp-km element from HTML previously but logic still here is fine
+                // document.getElementById('disp-km').innerText = c.km.toLocaleString(); 
+                document.getElementById('set-name').value = c.name;
+                const left = c.interval - (c.km - c.lastMaint);
+                const b = document.getElementById('maint-badge');
+                if(left < 0) { b.innerText = "BAKIM GEÇTİ"; b.style.color="rgba(246,79,89,0.8)"; b.style.borderColor="red"; } 
+                else if(left < 1000) { b.innerText = "BAKIM YAKLAŞTI"; b.style.color="#ffd60a"; b.style.borderColor="#ffd60a"; } 
+                else { b.innerText = "DURUM İYİ"; b.style.color="var(--energy-color)"; b.style.borderColor="var(--energy-color)"; }
+                ['fl','fr','rl','rr'].forEach(k => { document.getElementById('val-'+k).innerText = Math.floor(this.data.tires[k]); });
+                const last = this.data.logs[this.data.logs.length-1];
+                if(last) document.getElementById('home-last-log').innerText = `${new Date(last.date).toLocaleDateString()} - ${last.type==='fuel'?'Yakıt':last.subType} (${last.cost}₺)`;
+                
+                this.calcSim(); // Update simulation visual
+                this.renderHistory();
+            },
+
+            saveFuel: function() {
+                const km = parseFloat(document.getElementById('f-km').value);
+                const cost = parseFloat(document.getElementById('f-cost').value);
+                const lit = parseFloat(document.getElementById('f-lit').value);
+                const station = document.getElementById('f-station').value || 'Bilinmiyor';
+                const date = document.getElementById('f-date').value || new Date().toISOString().split('T')[0];
+                if(!km || !cost) return alert("Eksik bilgi");
+                if(km < this.data.car.km) return alert("KM düşemez!");
+                const wear = (km - this.data.car.km) / 500; 
+                for(let k in this.data.tires) this.data.tires[k] = Math.max(0, this.data.tires[k] - wear);
+                this.data.logs.push({ id: Date.now(), type: 'fuel', date, km, cost, lit, station, rating: this.currentRating, usdRate: this.currentUsdRate, usdCost: parseFloat((cost/this.currentUsdRate).toFixed(2)) });
+                this.data.car.km = km;
+                this.save(); this.closeModal(); this.updateUI(); this.runAI(); this.showToast('Yakıt kaydedildi');
+            },
+
+            saveMaint: function() {
+                const type = document.getElementById('m-type').value;
+                const km = parseFloat(document.getElementById('m-km').value);
+                const cost = parseFloat(document.getElementById('m-cost').value);
+                const note = document.getElementById('m-note').value;
+                const date = document.getElementById('m-date').value || new Date().toISOString().split('T')[0];
+                if(!km) return alert("KM Giriniz");
+                if(type === 'Periyodik') this.data.car.lastMaint = km;
+                if(km > this.data.car.km) this.data.car.km = km;
+                this.data.logs.push({ id: Date.now(), type: 'maint', subType: type, date, km, cost, note, usdRate: this.currentUsdRate, usdCost: parseFloat((cost/this.currentUsdRate).toFixed(2)) });
+                this.save(); this.closeModal(); this.updateUI(); this.runAI(); this.showToast('Bakım kaydedildi');
+            },
+
+            changeMonth: function(dir) {
+                this.calMonth += dir;
+                if(this.calMonth > 11) { this.calMonth = 0; this.calYear++; }
+                else if(this.calMonth < 0) { this.calMonth = 11; this.calYear--; }
+                this.renderCalendar(this.data.logs);
+            },
+
+            renderCalendar: function(logs) {
+                const calGrid = document.getElementById('cal-grid');
+                const monthTitle = document.getElementById('cal-month-year');
+                const firstDay = new Date(this.calYear, this.calMonth, 1).getDay();
+                const startOffset = firstDay === 0 ? 6 : firstDay - 1; 
+                const daysInMonth = new Date(this.calYear, this.calMonth + 1, 0).getDate();
+                monthTitle.innerText = new Date(this.calYear, this.calMonth).toLocaleDateString('tr-TR', {month:'long', year:'numeric'});
+                calGrid.innerHTML = '';
+                for(let i=0; i<startOffset; i++) calGrid.innerHTML += `<div></div>`;
+                for(let i=1; i<=daysInMonth; i++) {
+                    const dateStr = `${this.calYear}-${String(this.calMonth+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
+                    const dayLogs = logs.filter(l => l.date === dateStr);
+                    let html = `<div class="cal-day ${dayLogs.length>0?'active-day':''}" onclick="app.openDayDetail('${dateStr}')">${i}`;
+                    if(dayLogs.length > 0) html += `<div class="cal-dot"></div>`;
+                    html += `</div>`;
+                    calGrid.innerHTML += html;
+                }
+            },
+
+            openDayDetail: function(dateStr) {
+                const logs = this.data.logs.filter(l => l.date === dateStr);
+                if(logs.length === 0) return;
+                const content = document.getElementById('day-detail-content');
+                document.getElementById('day-detail-title').innerText = new Date(dateStr).toLocaleDateString('tr-TR', {dateStyle:'full'});
+                content.innerHTML = '';
+                logs.forEach(l => {
+                    const isF = l.type === 'fuel';
+                    content.innerHTML += `
+                        <div style="background:rgba(255,255,255,0.05); padding:15px; border-radius:12px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
+                            <div style="display:flex; gap:10px; align-items:center;">
+                                <i class="fas ${isF?'fa-gas-pump':'fa-wrench'}" style="color:${isF?'#30cfd0':'#f64f59'}; font-size:1.2em;"></i>
+                                <div><div style="font-weight:700;">${isF?'Yakıt':l.subType}</div><div style="font-size:0.8em; color:#aaa;">${isF?l.station:l.note}</div></div>
+                            </div>
+                            <div style="text-align:right;"><div style="font-weight:700;">${l.cost}₺</div><div style="font-size:0.8em; color:#666;">${l.usdCost}$</div></div>
+                        </div>`;
+                });
+                document.getElementById('modal-container').classList.remove('hidden');
+                document.querySelectorAll('.card').forEach(c => c.classList.add('hidden'));
+                document.getElementById('modal-day-detail').classList.remove('hidden');
+            },
+
+            renderHistory: function() {
+                let fCost = 0, mCost = 0, totalUsd = 0;
+                this.data.logs.forEach(l => { if(l.type==='fuel') fCost+=l.cost; else mCost+=l.cost; if(l.usdCost) totalUsd += l.usdCost; });
+                document.getElementById('total-tl-disp').innerText = (fCost+mCost).toLocaleString() + ' ₺';
+                document.getElementById('total-usd-disp').innerText = totalUsd.toLocaleString() + ' $';
+                if(this.chartInst) this.chartInst.destroy();
+                const ctx = document.getElementById('costChart').getContext('2d');
+                this.chartInst = new Chart(ctx, { type: 'doughnut', data: { labels: ['Yakıt', 'Bakım'], datasets: [{ data: [fCost, mCost], backgroundColor: ['#30cfd0', '#f64f59'], borderWidth: 0 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position:'right', labels:{color:'white'} } } } });
+                this.renderCalendar(this.data.logs);
+            },
+
+            editTire: function(key) {
+                this.editingKey = key;
+                const val = Math.floor(this.data.tires[key]);
+                document.getElementById('t-slider').value = val;
+                document.getElementById('disp-tire-val').innerText = val + '%';
+                this.openModal('tire');
+            },
+            updateTire: function() { this.data.tires[this.editingKey] = parseFloat(document.getElementById('t-slider').value); this.save(); this.closeModal(); this.updateUI(); this.showToast('Lastik güncellendi'); },
+            renewTire: function() { this.data.tires[this.editingKey] = 100; this.save(); this.closeModal(); this.updateUI(); this.showToast('Lastik yenilendi'); },
+            saveSettings: function() { this.data.car.name = document.getElementById('set-name').value; this.data.settings.theme = document.getElementById('set-theme').value; this.save(); this.updateUI(); },
+            applyTheme: function(t) { document.documentElement.setAttribute('data-theme', t); },
+            setFontSize: function(s) { document.documentElement.style.setProperty('--font-size-base', s + 'px'); this.save(); },
+            setEnergyColor: function(c, s=true) { 
+                this.data.settings.energyColor = c; 
+                document.documentElement.style.setProperty('--energy-color', c); 
+                if(s){ this.save(); this.showToast('Enerji rengi güncellendi'); } 
+            },
+
+            navTo: function(view, el) {
+                document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
+                document.getElementById(view).classList.remove('hidden');
+                document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+                el.classList.add('active');
+                if(view === 'view-history') this.renderHistory();
+            },
+            openModal: function(id) {
+                document.getElementById('modal-container').classList.remove('hidden');
+                document.querySelectorAll('.card').forEach(c => { if(c.parentElement.id === 'modal-container') c.classList.add('hidden'); });
+                document.getElementById('form-'+id).classList.remove('hidden');
+                const today = new Date().toISOString().split('T')[0];
+                if(document.getElementById('f-date')) document.getElementById('f-date').value = today;
+                if(document.getElementById('m-date')) document.getElementById('m-date').value = today;
+                this.setRating(0);
+            },
+            closeModal: function() { document.getElementById('modal-container').classList.add('hidden'); },
+            hardReset: function() { if(confirm("Tüm veriler silinecek.")) { localStorage.removeItem('carlife_v13'); location.reload(); } },
+            pdfExport: function() {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                doc.text(`Rapor: ${this.data.car.name}`, 14, 20);
+                const rows = this.data.logs.map(l => { const desc = l.type === 'fuel' ? `Yakıt: ${l.station}` : `Bakım: ${l.subType}`; return [l.date, desc, l.cost+' TL', l.usdCost? l.usdCost+' $':'-']; });
+                doc.autoTable({ head:[['Tarih','Detay','TL','USD']], body:rows, startY:30 });
+                doc.save('CarLife_Rapor.pdf');
+            },
+            
+            // --- DATA EXPORT / IMPORT ---
+            exportData: function() {
+                const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(this.data));
+                const dlAnchorElem = document.createElement('a');
+                dlAnchorElem.setAttribute("href", dataStr);
+                dlAnchorElem.setAttribute("download", `CarLife_Backup_${new Date().toISOString().split('T')[0]}.json`);
+                dlAnchorElem.click();
+            },
+            importData: function(input) {
+                const file = input.files[0];
+                if(!file) return;
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const json = JSON.parse(e.target.result);
+                        if(json.car && json.logs) {
+                            this.data = json;
+                            this.save();
+                            alert("Veriler başarıyla yüklendi!");
+                            location.reload();
+                        } else alert("Geçersiz dosya formatı.");
+                    } catch(err) { alert("Dosya okuma hatası."); }
+                };
+                reader.readAsText(file);
+            },
+
+            save: function() { localStorage.setItem('carlife_v13', JSON.stringify(this.data)); }
+        };
+
+        window.onload = () => app.init();
+    </script>
+</body>
+</html>
